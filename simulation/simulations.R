@@ -224,9 +224,6 @@ run_baySeq <- function(dat){
 
 # Analysis code-----------------------------------------------------------------
 
-# The directory change assumes you are using the R project.
-
-setwd("simulation")
 ###Loading libraries
 library(plyr)
 library(dplyr)
@@ -314,7 +311,6 @@ runBenchmark <- function(d, n, seq.depth, pval = 0.05, mc.samples = 500){
                  text = element_text(size=18))
   p <- plot_grid(p1, p2[[1]], p2[[2]], nrow=3, align="v", rel_heights=c(1.7, 1,1))
   p
-  #ggsave(p1, file.path("Results","aldex_deseq_failures.pdf"))
 }# end of function
 
 ###Setting the data parameters for all simulations
@@ -336,7 +332,7 @@ model.name.levels <- c("Informed", "Gamma = 0.5", "Gamma = 0.25","Gamma = 0.07",
 
 ##If this throws an 'Error in seq.default(from, to by)' error, increase size of your plot viewer.
 runBenchmark(d, n = 50, seq.depth = 5000, mc.samples = 2000)
-ggsave(file.path("results", "sim-res-by-method.pdf"), height = 7, units = "in", width = 7)
+ggsave(file.path("simulation", "results", "sim-res-by-method.pdf"), height = 7, units = "in", width = 7)
 
 #-------------------------------------------------------------------------------
 
@@ -439,7 +435,7 @@ ggplot(benchmark_df, aes(x=n, y = fdr, group = method, color = method)) +
   #geom_label_repel(aes(label = label),
   #                 na.rm = TRUE) 
 
-ggsave(file.path("results", "sim-fdr-by-method-by-size-shape.pdf"), height = 7, units = "in", width = 10)
+ggsave(file.path("simulation", "results", "sim-fdr-by-method-by-size-shape.pdf"), height = 7, units = "in", width = 10)
 
 
 #-------------------------------------------------------------------------------
@@ -514,7 +510,7 @@ ggplot(B.graph, aes(x=gamma, y=Effect, group = Sequence)) +
   ylab("Effect Size") +
   theme(text = element_text(size = 16))
 
-ggsave(file.path("results", "sim-gamma.pdf"), height = 4, units = "in", width = 7)
+ggsave(file.path("simulation", "results", "sim-gamma.pdf"), height = 4, units = "in", width = 7)
 
 #-------------------------------------------------------------------------------
 
@@ -857,7 +853,7 @@ ggplot(graph.df, aes(x = N, y = val, group = type, color = type, label = label))
   ylim(c(0,1)) +
   theme(text=element_text(size=20))
 
-ggsave(file.path("results", "inc-fdr.pdf"), height = 4, units = "in", width = 7)
+ggsave(file.path("simulation", "results", "inc-fdr.pdf"), height = 4, units = "in", width = 7)
 
 
 #-------------------------------------------------------------------------------

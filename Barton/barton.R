@@ -9,9 +9,8 @@ library(tidyverse)
 library(ggrepel)
 
 set.seed(2022)
-setwd("Barton")
 ##Loading in the RDA data
-load(file.path("data", "barton.d.agg.t.Rda"))
+load(file.path("Barton", "data", "barton.d.agg.t.Rda"))
 dim(d.agg.t)
 ##6328 taxa over 96 samples
 
@@ -148,7 +147,7 @@ ggplot(graph.df, aes(x= Gamma, y = Percent, group = Group, fill = Group)) +
   theme(text=element_text(size=21)) 
 
 
-ggsave(file.path("results", "Barton_expandedGammaDiagramnoLegend.pdf"), width = 8.5, height = 5)
+ggsave(file.path("Barton", "results", "Barton_expandedGammaDiagramnoLegend.pdf"), width = 8.5, height = 5)
 
 graph.df <- graph.df %>%
   filter(gamma >=1) %>%
@@ -178,6 +177,6 @@ ggplot(graph.df, aes(x= Gamma, y = Percent, group = Group, fill = Group)) +
   theme(text=element_text(size=21)) 
 
 
-ggsave(file.path("results", "Barton_expandedGammaDiagramZoomnoLegend.pdf"), width = 7, height = 5)
+ggsave(file.path("Barton", "results", "Barton_expandedGammaDiagramZoomnoLegend.pdf"), width = 7, height = 5)
 
 #-------------------------------------------------------------------------------

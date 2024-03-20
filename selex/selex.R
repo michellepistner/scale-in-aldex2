@@ -11,9 +11,6 @@ library(edgeR)
 library(baySeq)
 set.seed(12345)
 
-# The directory change assumes you are using the R project.
-setwd("selex")
-
 # Selex data example
 
 # Data can be loaded directly from ALDEx2
@@ -256,7 +253,7 @@ for(j in 1:k){
 }
 
 # Saving the results 
-write.csv(benchmark_df, file.path("results", "benchmarking_by_method_results.csv"))
+write.csv(benchmark_df, file.path("selex", "results", "benchmarking_by_method_results.csv"))
 
 ## Plotting typeI error
 benchmark_df$typeI <- benchmark_df$fp/(benchmark_df$tn + benchmark_df$fp)
@@ -276,7 +273,7 @@ ggplot(benchmark_df, aes(x=n, y = typeI, group = method, color = method)) +
 #geom_label_repel(aes(label = label),
 #                 na.rm = TRUE) 
 
-ggsave(file.path("results", "selex-typeI-by-method-by-size.pdf"), height = 7, units = "in", width = 10)
+ggsave(file.path("selex", "results", "selex-typeI-by-method-by-size.pdf"), height = 7, units = "in", width = 10)
 
 ##Plotting sensitivity
 benchmark_df$sensitivity <- (benchmark_df$tp + benchmark_df$fn)/(benchmark_df$tp + benchmark_df$fn + benchmark_df$tn + benchmark_df$fp)
@@ -295,7 +292,7 @@ ggplot(benchmark_df, aes(x=n, y = sensitivity, group = method, color = method)) 
 #geom_label_repel(aes(label = label),
 #                 na.rm = TRUE) 
 
-ggsave(file.path("results", "selex-sensitivity-by-method-by-size.pdf"), height = 7, units = "in", width = 10)
+ggsave(file.path("selex", "results", "selex-sensitivity-by-method-by-size.pdf"), height = 7, units = "in", width = 10)
 
 #-------------------------------------------------------------------------------
 
@@ -391,7 +388,7 @@ p <- ggplot(df, aes(x = t, group = group, color = group, fill = group)) +
   ylab("Density")
 
 p
-ggsave(file.path("results", "tstat_densities.pdf"), height = 7, units = "in", width = 7)
+ggsave(file.path("selex", "results", "tstat_densities.pdf"), height = 7, units = "in", width = 7)
 
 # Using a helper function to caculate the changes
 calc_diff(t.matrix[4,], df.matrix[4,])
