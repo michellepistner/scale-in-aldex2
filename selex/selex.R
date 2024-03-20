@@ -45,7 +45,7 @@ mean(gm_imp)
 ## Reading in the true positives------------------------------------------------
 
 ## True positives
-df_true <- read.delim("selex-truth.txt")
+df_true <- read.delim(file.path("selex", "selex-truth.txt"))
 true_pos <- c(df_true$X)
 
 #-------------------------------------------------------------------------------

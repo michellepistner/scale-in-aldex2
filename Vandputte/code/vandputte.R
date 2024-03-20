@@ -115,10 +115,10 @@ phylo <- phyloseq(otu1, sam1, tax1)
 phylo_genus <- tax_glom(phylo, taxrank = "Genus")
 
 ##Filtering OTU table in phyloseq
-filter <- function(vec){
+filter.tax <- function(vec){
   return(sum(vec > 1) > .2*length(vec))
 }
-red_phylo <- filter_taxa(phylo_genus, filter, prune = TRUE)
+red_phylo <- filter_taxa(phylo_genus, filter.tax, prune = TRUE)
 
 ##Estimate of theta^\perp from the data
 inds <- which(sample_data(red_phylo)$Health.status == "CD")
