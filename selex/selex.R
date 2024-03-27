@@ -225,7 +225,7 @@ runBenchmark_DF <- function(rdat, conds, taxa_truth, pval = 0.05, mc.samples = 5
 
 # Running over sample sizes
 
-n_to_test <-  c(5,7,10,15,20,25,30,40,50,60,70,80,90,100)
+n_to_test <-  c(5,7,10,15,20,25,30,40,50)
 benchmark_df <- data.frame()
 k <- 3 # Number of replicates
 
@@ -262,11 +262,13 @@ ggplot(benchmark_df, aes(x=n, y = typeI, group = method, color = method)) +
   #geom_line(aes(linetype = method), lwd = 0.5) +
   geom_point(alpha = 0.7) +
   geom_smooth(method = "loess", alpha = 0.05, linewidth = 1, span = 1) +
-  scale_color_npg() +
+  scale_color_manual(values = c("#E64B35FF","#4DBBD5FF", "#3C5488FF","#00A087FF", "#7E6148FF", "#F39B7FFF", "#8491B4FF"),
+                     labels = c(expression(ALDEx2~(gamma==0)), expression(ALDEx2~(gamma==0.5)), expression(ALDEx2~(gamma==5)), "baySeq", "DESeq2", "edgeR", "limma")) +
   theme_bw() +
   geom_hline(yintercept = 0.05) +
   theme(legend.title = element_blank(),
-        text = element_text(size=16)) +
+        text = element_text(size=22),
+        legend.text.align = 0) +
   xlab("Sample Size") +
   ylim(c(0,1.01)) +
   ylab("Type-I Error Rate")
@@ -276,16 +278,18 @@ ggplot(benchmark_df, aes(x=n, y = typeI, group = method, color = method)) +
 ggsave(file.path("selex", "results", "selex-typeI-by-method-by-size.pdf"), height = 7, units = "in", width = 10)
 
 ##Plotting sensitivity
-benchmark_df$sensitivity <- (benchmark_df$tp + benchmark_df$fn)/(benchmark_df$tp + benchmark_df$fn + benchmark_df$tn + benchmark_df$fp)
+benchmark_df$sensitivity <- (benchmark_df$tp)/(benchmark_df$tp + benchmark_df$fn)
 
 ggplot(benchmark_df, aes(x=n, y = sensitivity, group = method, color = method)) +
   #geom_line(aes(linetype = method), lwd = 0.5) +
   geom_point(alpha = 0.7) +
   geom_smooth(method = "loess", alpha = 0.05, linewidth = 1, span = 1) +
-  scale_color_npg() +
+  scale_color_manual(values = c("#E64B35FF","#4DBBD5FF", "#3C5488FF","#00A087FF", "#7E6148FF", "#F39B7FFF", "#8491B4FF"),
+                     labels = c(expression(ALDEx2~(gamma==0)), expression(ALDEx2~(gamma==0.5)), expression(ALDEx2~(gamma==5)), "baySeq", "DESeq2", "edgeR", "limma")) +
   theme_bw() +
   theme(legend.title = element_blank(),
-        text = element_text(size=16)) +
+        text = element_text(size=22),
+        legend.text.align = 0) +
   xlab("Sample Size") +
   ylim(c(0,1.01)) +
   ylab("Sensitivity")
@@ -328,7 +332,7 @@ t.fast.subset <- function(data, group){
 ##selex example
 data(selex)
 conds <- c(rep("NS", 7), rep("S", 7))
-clr <- aldex.clr(selex, conds, mc.samples=2000, denom="all", verbose=FALSE, gamma = 1)
+clr <- aldex.clr(selex, conds, mc.samples=1000, denom="all", verbose=FALSE, gamma = 1)
 
 # Most is taken right from aldex.ttest
 # get dimensions, names, etc from the input data
