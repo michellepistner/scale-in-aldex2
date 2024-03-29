@@ -126,6 +126,25 @@ normalized_GC <- apply(t(otu_table(red_phylo))+.5, 2, FUN = function(x){x/sum(x)
 gm_GC <- apply(normalized_GC, 2, FUN = function(x){mean(log2(x))})
 mean(-1*gm_GC[inds]) - mean(-1*gm_GC[-inds])
 
+## Value implied by the dirichlet samples
+## CLR estimate
+clr.samps <- aldex.clr(t(otu_table(red_phylo)), sample_data(red_phylo)$Health.status, mc.samples = 1000, denom = "all")
+dir.sams <- clr.samps@dirichletData
+
+gm_imp <- rep(NA,1000)
+
+for(i in 1:1000){
+  tmp <- matrix(NA,nrow = dim(red_phylo@otu_table)[2], ncol = dim(red_phylo@otu_table)[1])
+  for(k in 1:dim(red_phylo@otu_table)[1]){
+    tmp[,k] <- dir.sams[[k]][,i]
+  }
+  tmp_gm <- apply(tmp, 2, FUN = function(x){mean(log2(x))})
+  gm_imp[i] <- mean(-1*mean(tmp_gm[inds])) - mean(-1*mean(tmp_gm[-inds]))
+}
+
+mean(gm_imp)
+
+
 ## Estimate of theta^\perp due to the flow cytometry measurements
 mean(log2(sample_data(red_phylo)$CellCount[inds])) - mean(log2(sample_data(red_phylo)$CellCount[-inds]))
 
@@ -232,8 +251,8 @@ tax_scale = sen_res[[5]] %>%
 
 
 ## Informed model
-scale.cd <- 2^matrix(rnorm(1000*29, mean = .7, sd = .125), nrow = 29)
-scale.control <- 2^matrix(rnorm(1000*66, mean = 1, sd = .125), nrow = 66)
+scale.cd <- 2^matrix(rnorm(1000*29, mean = log2(.7), sd = .125), nrow = 29)
+scale.control <- 2^matrix(rnorm(1000*66, mean = log2(1), sd = .125), nrow = 66)
 
 scale.inf <- rbind(scale.cd, scale.control)
 aldex_informed <- aldex(Y,X,mc.samples = 1000, gamma = scale.inf)
