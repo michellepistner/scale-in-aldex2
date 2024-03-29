@@ -56,7 +56,7 @@ true_pos <- c(df_true$X)
 # Selex resampling different methods
 
 # Helper functions to run each of these methods
-run_aldex2 <- function(dat, conds, denom="all", gamma= NULL, mc.samples = 500){
+run_aldex2 <- function(dat, conds, denom="all", gamma= NULL, mc.samples = 1000){
   aldex.fit <- aldex(dat, conds, denom=denom, mc.samples = mc.samples, gamma = gamma, effect = FALSE) %>% 
     as.data.frame() %>% 
     rownames_to_column("category") %>% 
@@ -143,7 +143,7 @@ run_baySeq <- function(dat,conds){
 
  # Helper function to run all of the methods
 
-runBenchmark_DF <- function(rdat, conds, taxa_truth, pval = 0.05, mc.samples = 500){
+runBenchmark_DF <- function(rdat, conds, taxa_truth, pval = 0.05, mc.samples = 1000){
   tp <- rep(NA, 7)
   fp <- rep(NA, 7)
   tn <- rep(NA, 7)
@@ -258,12 +258,16 @@ write.csv(benchmark_df, file.path("selex", "results", "benchmarking_by_method_re
 ## Plotting typeI error
 benchmark_df$typeI <- benchmark_df$fp/(benchmark_df$tn + benchmark_df$fp)
 
-ggplot(benchmark_df, aes(x=n, y = typeI, group = method, color = method)) +
+ggplot(benchmark_df, aes(x=n, y = typeI, group = method, color = method, linetype=method, shape = method)) +
   #geom_line(aes(linetype = method), lwd = 0.5) +
   geom_point(alpha = 0.7) +
   geom_smooth(method = "loess", alpha = 0.05, linewidth = 1, span = 1) +
-  scale_color_manual(values = c("#E64B35FF","#4DBBD5FF", "#3C5488FF","#00A087FF", "#7E6148FF", "#F39B7FFF", "#8491B4FF"),
-                     labels = c(expression(ALDEx2~(gamma==0)), expression(ALDEx2~(gamma==0.5)), expression(ALDEx2~(gamma==5)), "baySeq", "DESeq2", "edgeR", "limma")) +
+  scale_color_manual(values = c("#00A087FF", "#E64B35FF","#4DBBD5FF","#B09C85FF", "#F39B7FFF", "#7E6148FF", "#8491B4FF"),
+                     labels = c("ALDEx2", expression(ALDEx2~(gamma==0.5)), expression(ALDEx2~(gamma==5)), "baySeq", "DESeq2", "edgeR", "limma")) +
+  scale_linetype_manual(values = c("solid", "dashed", "dashed", "solid", "solid", "solid", "solid"),
+                        labels = c("ALDEx2", expression(ALDEx2~(gamma==0.5)), expression(ALDEx2~(gamma==5)), "baySeq", "DESeq2", "edgeR", "limma")) +
+  scale_shape_manual(values = c(16, 17,17,16,16,16,16),
+                     labels = c("ALDEx2", expression(ALDEx2~(gamma==0.5)), expression(ALDEx2~(gamma==5)), "baySeq", "DESeq2", "edgeR", "limma")) +
   theme_bw() +
   geom_hline(yintercept = 0.05) +
   theme(legend.title = element_blank(),
@@ -280,12 +284,16 @@ ggsave(file.path("selex", "results", "selex-typeI-by-method-by-size.pdf"), heigh
 ##Plotting sensitivity
 benchmark_df$sensitivity <- (benchmark_df$tp)/(benchmark_df$tp + benchmark_df$fn)
 
-ggplot(benchmark_df, aes(x=n, y = sensitivity, group = method, color = method)) +
+ggplot(benchmark_df, aes(x=n, y = sensitivity, group = method, color = method, linetype=method, shape = method)) +
   #geom_line(aes(linetype = method), lwd = 0.5) +
   geom_point(alpha = 0.7) +
   geom_smooth(method = "loess", alpha = 0.05, linewidth = 1, span = 1) +
-  scale_color_manual(values = c("#E64B35FF","#4DBBD5FF", "#3C5488FF","#00A087FF", "#7E6148FF", "#F39B7FFF", "#8491B4FF"),
-                     labels = c(expression(ALDEx2~(gamma==0)), expression(ALDEx2~(gamma==0.5)), expression(ALDEx2~(gamma==5)), "baySeq", "DESeq2", "edgeR", "limma")) +
+  scale_color_manual(values = c("#00A087FF", "#E64B35FF","#4DBBD5FF","#B09C85FF", "#F39B7FFF", "#7E6148FF", "#8491B4FF"),
+                     labels = c("ALDEx2", expression(ALDEx2~(gamma==0.5)),  expression(ALDEx2~(gamma==5)), "baySeq", "DESeq2", "edgeR", "limma")) +
+  scale_linetype_manual(values = c("solid", "dashed", "dashed", "solid", "solid", "solid", "solid"),
+                        labels = c("ALDEx2", expression(ALDEx2~(gamma==0.5)), expression(ALDEx2~(gamma==5)), "baySeq", "DESeq2", "edgeR", "limma")) +
+  scale_shape_manual(values = c(16, 17,17,16,16,16,16),
+                     labels = c("ALDEx2", expression(ALDEx2~(gamma==0.5)),  expression(ALDEx2~(gamma==5)), "baySeq", "DESeq2", "edgeR", "limma")) +
   theme_bw() +
   theme(legend.title = element_blank(),
         text = element_text(size=22),
