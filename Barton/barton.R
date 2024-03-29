@@ -39,12 +39,12 @@ mean(-1*gm_GC[45:86]) - mean(-1*gm_GC[1:44])
 
 ##Implied by the CLR on the Dirichlet data
 conds = c(rep("SNF", 44), rep("WT", 42))
-clr.samps <- aldex.clr(geneCounts, conds, mc.samples = 1000, denom = "all")
+clr.samps <- aldex.clr(geneCounts, conds, mc.samples = 500, denom = "all")
 dir.sams <- clr.samps@dirichletData
 
-gm_imp <- rep(NA,1000)
+gm_imp <- rep(NA,500)
 
-for(i in 1:1000){
+for(i in 1:500){
   tmp <- matrix(NA,nrow = nrow(geneCounts), ncol = ncol(geneCounts))
   for(k in 1:86){
     tmp[,k] <- dir.sams[[k]][,i]
