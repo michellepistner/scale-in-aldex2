@@ -92,8 +92,8 @@ plot_sig2 <- function(rrs, truth, ...){
           text = element_text(size=16),
           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
     ylab("ALDEx2")+
-    scale_pattern_manual(values = c(TP = "none", TN = "none", FP = "none", FN = "stripe")) +
-    scale_fill_manual(values= c("black", "white", "grey", "white"))
+    scale_pattern_manual(values = c(TP = "none", TN = "none", FP = "stripe", FN = "stripe")) +
+    scale_fill_manual(values= c("grey", "white", "grey", "white"))
   
   p.others <- bind_rows(rrs.others, .id="Model") %>% 
     dplyr::select(Model, category, sig) %>% 
@@ -112,8 +112,8 @@ plot_sig2 <- function(rrs, truth, ...){
           text = element_text(size=16),
           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
     ylab("Others") +
-    scale_pattern_manual(values = c(TP = "none", TN = "none", FP = "none", FN = "stripe")) +
-    scale_fill_manual(values= c("black", "white", "grey", "white"))
+    scale_pattern_manual(values = c(TP = "none", TN = "none", FP = "stripe", FN = "stripe")) +
+    scale_fill_manual(values= c("grey", "white", "grey", "white"))
   
   p.comb <- list(p.aldex, p.others)
   return(p.comb)
@@ -122,7 +122,7 @@ plot_sig2 <- function(rrs, truth, ...){
 #-------------------------------------------------------------------------------
 
 # Functions for running the tested methods--------------------------------------
-run_aldex2 <- function(dat, denom="all", gamma= NULL, mc.samples = 500){
+run_aldex2 <- function(dat, denom="all", gamma= NULL, mc.samples = 1000){
   countdata <- t(dat[,-1,drop=F])
   colnames(countdata) <- paste0("n", 1:ncol(countdata))
   aldex.fit <- aldex(countdata, as.character(dat$Condition), denom=denom, mc.samples = mc.samples, gamma = gamma) %>% 
@@ -222,6 +222,50 @@ run_baySeq <- function(dat){
 
 #-------------------------------------------------------------------------------
 
+## Helper function for computing the LFC----------------------------------------
+aldex.lfc <- function(clr){
+  # Use clr conditions slot instead of input
+  if (is.vector(clr@conds)) {
+    conditions <- clr@conds
+  } else if (is.factor(clr@conds)) {
+    if (length(levels(clr@conds) == 2)) {
+      conditions <- clr@conds
+    }
+  } else if (is.matrix(clr@conds)){
+    stop("currently does not support > 2 conditions.")
+  } else {
+    stop("please check that the conditions parameter for aldex.clr is correct.")
+  }
+  
+  nr <- numFeatures(clr) # number of features
+  rn <- getFeatureNames(clr) # feature names
+  mc.s <- numMCInstances(clr)
+  p <- length(conditions)
+  # ---------------------------------------------------------------------
+  
+  # sanity check to ensure only two conditons passed to this function
+  conditions <- as.factor( conditions )
+  levels     <- levels( conditions )
+  
+  sets <- levels
+  setA <- which(conditions == sets[1])
+  setB <- which(conditions == sets[2])
+  
+  
+  ## we need to fill an array and calculate these statistics over the array
+  W.est <- array(NA, dim = c(nr, p, mc.s))
+  
+  for(i in 1:p){
+    W.est[,i,] <- getMonteCarloReplicate(clr, i)
+  }
+  print(paste0("Condition A is ", sets[1], " and condition B is ", sets[2], "."))
+  lfc <- rep(NA, mc.s)
+  lfc <- apply(W.est, MARGIN = 3, FUN = function(mat, setA, setB){rowMeans(mat[,setA]) - rowMeans(mat[,setB])}, setA =setA, setB = setB)
+  return(data.frame("lfc" = rowMeans(lfc), "sd" = apply(lfc,1,sd), "p2.5" = apply(lfc,1,quantile, probs = c(0.025)), "p97.5" = apply(lfc,1,quantile, probs = c(.975))))
+}
+
+#-------------------------------------------------------------------------------
+
 # Analysis code-----------------------------------------------------------------
 
 ###Loading libraries
@@ -250,7 +294,7 @@ set.seed(12345)
 ###Scaled ALDEx2 simulation
 
 # Code to benchmark performance for one sample size (n = 50)--------------------
-runBenchmark <- function(d, n, seq.depth, pval = 0.05, mc.samples = 500){
+runBenchmark <- function(d, n, seq.depth, pval = 0.05, mc.samples = 1000){
   dd <- length(d)/2
   truth1 <- !(d[1:dd]==d[(dd+1):(2*dd)])##testing if the mean is different
   truth2 <- (1:dd)[truth1]##Locations of the differences
@@ -265,7 +309,7 @@ runBenchmark <- function(d, n, seq.depth, pval = 0.05, mc.samples = 500){
   gm_rdat <- apply(norm_rdat, 2, FUN = function(x){mean(log2(x))})
   
   print("Scale implied by the CLR normalization...")
-  clr.samps <- aldex.clr(t(rdat[,-1]), as.character(rdat$Condition), mc.samples = 500, denom = "all")
+  clr.samps <- aldex.clr(t(rdat[,-1]), as.character(rdat$Condition), mc.samples = 1000, denom = "all")
   dir.sams <- clr.samps@dirichletData
   
   gm_imp <- rep(NA,500)
@@ -310,7 +354,7 @@ runBenchmark <- function(d, n, seq.depth, pval = 0.05, mc.samples = 500){
                  axis.ticks.x=element_blank(),
                  text = element_text(size=18))
   p <- plot_grid(p1, p2[[1]], p2[[2]], nrow=3, align="v", rel_heights=c(1.7, 1,1))
-  p
+  ggsave(file.path("simulation", "results", "sim-res-by-method.pdf"), p, height = 7, units = "in", width = 7)
 }# end of function
 
 ###Setting the data parameters for all simulations
@@ -331,8 +375,7 @@ model.names <- c("afit"="Original",
 model.name.levels <- c("Informed", "Gamma = 0.5", "Gamma = 0.25","Gamma = 0.07", "Gamma = 0", "Original","limma","edgeR", "DESeq2", "BaySeq")
 
 ##If this throws an 'Error in seq.default(from, to by)' error, increase size of your plot viewer.
-runBenchmark(d, n = 50, seq.depth = 5000, mc.samples = 2000)
-ggsave(file.path("simulation", "results", "sim-res-by-method.pdf"), height = 7, units = "in", width = 7)
+runBenchmark(d, n = 50, seq.depth = 5000, mc.samples = 1000)
 
 #-------------------------------------------------------------------------------
 
@@ -342,7 +385,7 @@ ggsave(file.path("simulation", "results", "sim-res-by-method.pdf"), height = 7, 
 ##To create the line graph
 
 ## This function will be used to run over a single sample size
-runBenchmark_DF <- function(d, n, seq.depth, pval = 0.05, mc.samples = 500){
+runBenchmark_DF <- function(d, n, seq.depth, pval = 0.05, mc.samples = 1000){
   dd <- length(d)/2
   truth1 <- !(d[1:dd]==d[(dd+1):(2*dd)])##testing if the mean is different
   truth2 <- (1:dd)[truth1]##Locations of the differences
@@ -406,7 +449,7 @@ benchmark_df <- data.frame()
 k <- 3 #This is the number of replicates
 for(j in 1:k){
   for(i in 1:length(n_to_test)){
-    tmp <- runBenchmark_DF(d, n = n_to_test[i], seq.depth = 5000, mc.samples = 2000)
+    tmp <- runBenchmark_DF(d, n = n_to_test[i], seq.depth = 5000, mc.samples = 1000)
     tmp$n <- rep(n_to_test[i], nrow(tmp))
     tmp$k <- rep(j, nrow(tmp))
     benchmark_df <- rbind(benchmark_df, tmp)
@@ -420,15 +463,20 @@ benchmark_df$fdr <- benchmark_df$fp/(benchmark_df$tp + benchmark_df$fp)
 benchmark_df$fdr <- ifelse(is.na(benchmark_df$fdr), 0 , benchmark_df$fdr)
 benchmark_df$label <- ifelse(benchmark_df$n == 300 & benchmark_df$k == 5, benchmark_df$method, NA)
 benchmark_df$method <- ifelse(benchmark_df$method == "Informed", "ALDEx2 (Informed)", benchmark_df$method)
-ggplot(benchmark_df, aes(x=n, y = fdr, group = method, color = method)) +
+ggplot(benchmark_df, aes(x=n, y = fdr, group = method, color = method,linetype = method)) +
   #geom_line(aes(linetype = method), lwd = 0.5) +
-  geom_point(aes(shape = method), alpha = 0.9) +
-  geom_smooth(method = "loess", alpha = 0.05, linewidth = 1, span = 1) +
-  scale_color_npg() +
-  scale_shape_manual(values = c(1, 15, 3, 4, 5, 6, 7)) +
+  geom_point(aes(shape = method), alpha = 0.7) +
+  geom_smooth(method = "loess", alpha = 0.05, span = 1, linewidth = 1) +
+  scale_color_manual(values = c("#00A087FF", "#E64B35FF","#4DBBD5FF","#B09C85FF", "#F39B7FFF", "#7E6148FF", "#8491B4FF"),
+                     labels = c("ALDEx2", expression(ALDEx2~(gamma==0.5)), "ALDEx2 (Informed)", "baySeq", "DESeq2", "edgeR", "limma")) +
+  scale_linetype_manual(values = c("solid", "solid", "dashed", "solid", "solid", "solid", "solid"),
+                        labels = c("ALDEx2", expression(ALDEx2~(gamma==0.5)), "ALDEx2 (Informed)", "baySeq", "DESeq2", "edgeR", "limma")) +
+  scale_shape_manual(values = c(16, 17,17,16,16,16,16),
+                     labels = c("ALDEx2", expression(ALDEx2~(gamma==0.5)), "ALDEx2 (Informed)", "baySeq", "DESeq2", "edgeR", "limma")) +
   theme_bw() +
   theme(legend.title = element_blank(),
-        text = element_text(size=16)) +
+        text = element_text(size=22),
+        legend.text.align = 0) +
   xlab("Sample Size") +
   ylim(c(0,1)) +
   ylab("False Discovery Rate")
@@ -454,8 +502,16 @@ rdat <- resample_data(dat, seq.depth=5000)
 # Running aldex2 on different values of gamma
 countdata <- t(rdat[,-1,drop=F])
 colnames(countdata) <- paste0("n", 1:ncol(countdata))
-clr <- aldex.clr(countdata, as.character(rdat$Condition), mc.samples = 1000, gamma = 1e-3)
-sen_res <- aldex.senAnalysis(clr, gamma = c(1e-3,.01, 0.025, 0.05, 0.075, .1,.2,.3,.4,.5,.6,.7,.8,.9,1))
+
+gamma_to_test <- c(1e-3,.01, 0.025, 0.05, 0.075, .1,.2,.3,.4,.5,.6,.7,.8,.9,1)
+sen_res <- list()
+# Computing over every gamma
+for(i in 1:length(gamma_to_test)){
+  clr <- aldex.clr(countdata, as.character(rdat$Condition), gamma = gamma_to_test[i],mc.samples = 1000)
+  res <- aldex.ttest(clr)
+  res <- cbind(res, aldex.lfc(clr))
+  sen_res[[i]] <- res
+}
 
 # Transforming from list to data frame
 
@@ -464,14 +520,14 @@ B <- matrix(NA, nrow = length(sen_res), ncol = dim(sen_res[[1]])[1])
 pvals <- matrix(NA, nrow = length(sen_res), ncol = dim(sen_res[[1]])[1])
 
 for(i in 1:length(sen_res)){
-  pvals[i,] <- sen_res[[i]]$we.ep
-  B[i,] <- sen_res[[i]]$effect
+  pvals[i,] <- sen_res[[i]]$we.eBH
+  B[i,] <- sen_res[[i]]$lfc/sen_res[[i]]$sd
 }
 
 # Prepping for plotting and plottind data
 
 P <- as.data.frame(pvals) 
-P$gamma <- gamma
+P$gamma <- gamma_to_test
 P <- P[,c(ncol(P), 1:(ncol(P)-1))]
 P <- reshape(P, idvar = "gamma",
              varying = list(2:ncol(P)),
@@ -486,7 +542,7 @@ seq_to_label <- as.numeric(sub("V", "", unique(P.toLabel$Sequence)))
 taxa_to_label = as.vector(na.omit(seq_to_label))
 
 B.graph <- as.data.frame(B)
-B.graph$gamma <- gamma
+B.graph$gamma <- gamma_to_test
 B.graph <- B.graph[,c(ncol(B.graph), 1:(ncol(B.graph)-1))]
 B.graph <- reshape(B.graph, idvar = "gamma",
                    varying = list(2:ncol(B.graph)),
@@ -507,8 +563,8 @@ ggplot(B.graph, aes(x=gamma, y=Effect, group = Sequence)) +
   geom_hline(yintercept=0, linetype="dashed", color = "red") +
   gghighlight(pval < 0.05) +
   xlab(expression(gamma)) +
-  ylab("Effect Size") +
-  theme(text = element_text(size = 16))
+  ylab("Standardized LFC") +
+  theme(text = element_text(size = 16)) 
 
 ggsave(file.path("simulation", "results", "sim-gamma.pdf"), height = 4, units = "in", width = 7)
 
@@ -799,7 +855,7 @@ new.clr <- function( reads, conds, mc.samples=128, denom="all",
 
 
 # Function for running this scale model
-CLR.mod <- function(d, n,gamma, seq.depth, pval = 0.05, mc.samples = 500){
+CLR.mod <- function(d, n,gamma, seq.depth, pval = 0.05, mc.samples = 1000){
   dd <- length(d)/2
   truth1 <- !(d[1:dd]==d[(dd+1):(2*dd)])##testing if the mean is different
   truth2 <- (1:dd)[truth1]##Locations of the differences
