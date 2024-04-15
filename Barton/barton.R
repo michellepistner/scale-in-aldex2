@@ -114,7 +114,7 @@ for(i in 1:length(gamma)){
 }
 
 
-graph.df <- data.frame("Gamma" = rep(gamma, times = 4), "Count" = c(tax.nonSig, tax.inBoth, tax.inCLR, tax.inINC), "Group" = rep(c("Neither", "Both", "CLR Only", "Informed Only"), each = length(gamma)))
+graph.df <- data.frame("Gamma" = rep(gamma, times = 4), "Count" = c(tax.nonSig, tax.inBoth, tax.inCLR, tax.inINC), "Group" = rep(c("Neither", "Both", "Default Only", "Informed Only"), each = length(gamma)))
 
 graph.df <- graph.df %>%
   mutate(gamma = Gamma) %>%
@@ -123,7 +123,7 @@ graph.df <- graph.df %>%
   mutate(Percent = (Count/nrow(geneCounts)) * 100) %>%
   filter(Group != "Neither")
 
-graph.df$Group <- ordered(graph.df$Group, levels = c( "Informed Only", "CLR Only", "Both"))
+graph.df$Group <- ordered(graph.df$Group, levels = c( "Informed Only", "Default Only", "Both"))
 
 
 ggplot(graph.df, aes(x= Gamma, y = Percent, group = Group, fill = Group)) +
