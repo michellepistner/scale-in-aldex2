@@ -1,2 +1,4 @@
 # scale-in-aldex2
-Code and data for "Beyond Normalization: Incorporating Scale Uncertainty in Microbiome and Gene Expression Analysis" by Nixon, M.P., Gloor, G.B, and J.D. Silverman.
+Code and data for "Incorporating scale uncertainty in microbiome and gene expression analysis as an extension of normalization" by Nixon, M.P., Gloor, G.B, and J.D. Silverman.
+
+This code is available under Apache License 2.0.
